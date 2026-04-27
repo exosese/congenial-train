@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   run-jar:
     docker:
-      - image: mcr.microsoft.com/powershell:lts-7.4-ubuntu-22.04 
+      - image: mcr.microsoft.com/powershell:lts-7.4-ubuntu-22.04  
 
     parameters:
       instance:
