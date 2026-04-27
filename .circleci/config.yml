@@ -1,0 +1,61 @@
+version: 2.1
+
+jobs:
+  run-jar:
+    docker:
+      - image: mcr.microsoft.com/powershell:lts-7.4-ubuntu-22.04 
+
+    parameters:
+      instance:
+        type: integer
+
+    steps:
+      - checkout
+
+      - run:
+          name: Debug password
+          command: |
+            pwsh -Command "
+              if (-not \$env:JAR_PASS) {
+                Write-Host 'JAR_PASS is empty ';
+                exit 1;
+              }
+              Write-Host ('PASS length: ' + \$env:JAR_PASS.Length);
+            "
+
+      - run:
+          name: Decrypt client.jar (PowerShell AES)
+          command: |
+            pwsh -Command "
+              \$pass = \$env:JAR_PASS;
+              \$key = [System.Text.Encoding]::UTF8.GetBytes(\$pass.PadRight(32).Substring(0,32));
+
+              \$data = [System.IO.File]::ReadAllBytes('client.jar.enc');
+
+              \$iv = \$data[0..15];
+              \$cipher = \$data[16..(\$data.Length-1)];
+
+              \$aes = [System.Security.Cryptography.Aes]::Create();
+              \$aes.Key = \$key;
+              \$aes.IV = \$iv;
+
+              \$decryptor = \$aes.CreateDecryptor();
+              \$plain = \$decryptor.TransformFinalBlock(\$cipher, 0, \$cipher.Length);
+
+              [System.IO.File]::WriteAllBytes('client.jar', \$plain);
+            "
+
+      - run:
+          name: Run client.jar
+          command: |
+            java -jar client.jar
+
+workflows:
+  run-parallel-jars:
+    jobs:
+      - run-jar:
+          matrix:
+            parameters:
+              instance: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                         11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                         21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
