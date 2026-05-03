@@ -4,9 +4,11 @@ jobs:
   run:
     docker:
       - image: cimg/openjdk:17.0.9
+
     parameters:
       instance:
         type: integer
+
     steps:
       - checkout
 
@@ -20,14 +22,14 @@ jobs:
       - run:
           command: |
             if [ ! -f "client.jar.enc" ]; then
-              echo "encrypted file not found in repo root"
+              echo "encrypted file missing"
               ls -lah
               exit 1
             fi
 
       - run:
           command: |
-            openssl enc -d -aes-256-cbc -pbkdf2 \
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 \
               -in client.jar.enc \
               -out client.jar \
               -pass pass:$password
